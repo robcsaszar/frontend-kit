@@ -1,10 +1,8 @@
-<img src=".github/frontend-kit.png" align="left" width="400" alt="frontend-kit banner"/>
+<p align="center"><img src=".github/frontend-kit.png" width="400" alt="frontend-kit banner"/></p>
 
 # frontend-kit
 
 4 skills: SvelteKit, canvas, drag-drop, SVG anim. Build UI right first try.
-
-<br clear="left"/>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![skills.sh](https://skills.sh/b/robcsaszar/frontend-kit)](https://skills.sh/robcsaszar/frontend-kit)
 
