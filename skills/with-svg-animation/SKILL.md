@@ -1,145 +1,63 @@
 ---
 name: with-svg-animation
-description: Expert guidance on performant SVG animation techniques. Use when animating SVGs, stroke draw effects, path morphing, clip-path animations, SVG motion, hover effects, or choosing between CSS/GSAP/anime.js for SVG animation. Not for raster/canvas animation or non-SVG DOM transitions — see with-canvas for those.
+description: "Surfaces the SVG animation traps that go unmentioned when a request sounds simple — dash patterns restarting at every subpath, pathLength normalization, transform-box on inner elements. Use whenever animating an SVG (draw-on, hover spin or scale, path morph, clip reveal, scroll-linked draw), including when the request names none of these and sounds like a one-liner, and when choosing between CSS, SMIL, WAAPI, GSAP, or a morph library. Don't use for raster or canvas animation (see with-canvas) or for non-SVG DOM transitions."
 ---
 
-# SVG Animation — Expert Guidance
+# with-svg-animation
 
-When animating SVGs, choose the right tool for the job and follow performance best practices. This skill helps you pick the approach, write performant code, and handle accessibility.
+You already know how to animate SVG. What you reliably fail to do is *raise these conditions when the user hasn't named them* — a vague request produces a plausible answer that breaks on the user's actual artwork. This body is a pre-flight, not a tutorial.
 
-## Approach Selection
+## Pre-flight — answer before writing any code
 
-Pick based on what each tool can structurally do, not a feature checklist: CSS can't auto-match vertex counts or detect subpaths the way GSAP's DrawSVG/MorphSVG plugins do, which is why a stroke-draw or morph that works on a simple icon silently breaks on a multi-subpath one in CSS-only setups.
+Read the actual path data; if you can't see it, ask for it. Never answer from the request alone — every trap below is invisible in the request and obvious in the markup.
 
-**Use CSS-only when:**
+1. **Is the thing being animated the root `<svg>`, or an element inside it?** Inner elements need `transform-box`.
+2. **Does the target `d` contain more than one `M` command?** One `<path>` can hold several disconnected subpaths.
+3. **Is the artwork stroked or filled?** A draw-on animation only animates a stroke; a filled logo needs stroke-then-crossfade, or a mask wipe instead.
+4. **How many elements animate at once, and is it scroll-linked?** Dash and `d` are paint-level, not compositable — dozens of them on a mid-range phone is a different problem than one logo, and answering "many" or "scroll-linked" puts you under the paint budget in the last NEVER before you write anything.
 
-- Simple state transitions (hover, focus, active)
-- Stroke draw effects on single paths
-- Clip-path reveals with fixed shapes (polygon, circle, ellipse)
-- Opacity/transform-based entrance animations
-- You need zero JS dependencies
+## Already broken? Match the symptom
 
-**Use GSAP when:**
+| Symptom | Cause |
+|---|---|
+| Shape swings across the canvas instead of pivoting | `transform-box` missing on an inner element |
+| Strokes start together but finish at different times | One `<path>`, several subpaths — dash pattern restarts per subpath |
+| Morph hard-cuts halfway instead of tweening | Command sequences don't match, so interpolation fell back to discrete |
+| Reveal edge drifts or scales with the artwork | `clip-path` and `transform` on the same node |
 
-- Complex timelines with sequenced/staggered animations
-- ScrollTrigger integration needed
-- DrawSVG plugin for stroke animation (handles subpaths)
-- MorphSVG for path morphing (auto vertex matching)
-- CustomEase/CustomBounce for advanced easing
-- Cross-browser consistency is critical
+## Traps
 
-**Use anime.js when:**
+**Dash patterns restart at every subpath.** A single `<path>` whose `d` has three `M` commands is not one continuous dash run — each subpath gets its own copy of the pattern, so all three start together and finish at different times. It reads as a glitch. Split the `d` into one `<path>` per subpath (a mechanical edit at each `M`) to get per-stroke control and staggering. `pathLength` does not rescue the single-path version.
 
-- Lightweight morphing (`d` attribute animation)
-- Organic blob/shape transitions
-- You want a smaller bundle than GSAP
-- Timeline features without GSAP's full weight
+**Use `pathLength="1"` instead of measuring.** It rescales the coordinate system that `stroke-dasharray` and `stroke-dashoffset` operate in, so `dasharray: 1; dashoffset: 1` hides any path regardless of length. No `getTotalLength()`, no hardcoded numbers that break when a designer nudges the artwork. Reach for measurement only when you need true constant pen-speed across paths of differing length.
 
-**Use Web Animations API (WAAPI) when:**
+**`transform-origin` needs `transform-box: fill-box` on inner elements.** On the root `<svg>` it behaves like a CSS box and `transform-origin: center` works. On a `<path>` or `<g>`, `transform-box` defaults to `view-box`, so `center` means the centre of the viewBox and the shape swings across the canvas instead of pivoting. Set both properties explicitly on every animated inner element.
 
-- Modern browser targets only
-- Transform/opacity animations
-- You want native performance without libraries
+**Do not reach for `vector-effect="non-scaling-stroke"` by reflex.** It keeps on-screen stroke width constant regardless of scale, which is wrong for a logo — a mark should thicken as it grows. It also forces stroke geometry to recompute against the current CTM on every paint, which compounds badly with dash animation. Use it only when constant stroke weight is the stated intent.
 
-## Performance Rules
+**A clip and a transform on the same node are one rigid unit.** Per spec the element's own transform also transforms its clip, so the reveal edge welds to the artwork and scales with it. When you want them decoupled, put `clip-path` on an outer group and the transform on an inner one. When you want them welded, put both on the same node deliberately.
 
-1. **Only animate compositable properties**: `transform` and `opacity` run on the GPU compositor. Animating `width`, `height`, `top`, `left`, `d`, `points`, or `viewBox` triggers layout/paint — use sparingly.
+## Escalation — CSS first
 
-2. **`will-change` usage**: Apply only to elements about to animate, remove after. Never blanket-apply `will-change: transform` to all SVG elements.
+Start in CSS and escalate only when CSS structurally cannot do it, not when it merely gets awkward:
 
-3. **Batch DOM reads/writes**: When using `getTotalLength()` or `getBBox()`, read all values first, then apply all changes. Interleaving reads/writes causes layout thrashing.
+| Reach for | When |
+|---|---|
+| CSS | Anything expressible as `transform`, `opacity`, dash offset, or interpolating between same-type same-vertex-count shapes |
+| SMIL `<animate>` | Cross-browser `d` animation with no JS — Firefox does not support CSS `d` interpolation |
+| WAAPI | You need JS control, scroll/pointer input, or reduced-motion branching, and `d` support is adequate for your targets |
+| Library | Only for geometry no native technique can produce — resampling mismatched point counts (Flubber) or subpath-count changes |
 
-4. **Prefer `<use>` sparingly in animated SVGs**: Cloned elements with `<use>` can cause unexpected paint invalidation during animation.
+GSAP's DrawSVG and MorphSVG are paid Club GreenSock plugins. Never emit code depending on them without confirmed licensing — check the project's dependencies or ask. Unconfirmed means use the native route or Flubber, and say why you did.
 
-5. **SVG vs CSS transforms**: SVG `transform` attribute uses a different coordinate system than CSS `transform`. For consistency, prefer CSS transforms with `transform-origin` set explicitly (SVG default origin is `0 0`, not center).
-
-6. **Frame budget**: Keep animations under 16ms/frame. Complex path morphing on many elements simultaneously will drop frames — stagger or reduce element count.
-
-## Stroke Animation (Draw Effect)
-
-The classic "drawing" effect uses `stroke-dasharray` and `stroke-dashoffset`.
-
-**Pattern:**
-
-1. Get path length via `getTotalLength()`
-2. Set `stroke-dasharray` to total length (one dash = full path)
-3. Animate `stroke-dashoffset` from total length → 0 (draws on) or 0 → total length (erases)
-
-**CSS-only approach** — set dasharray/dashoffset in CSS, animate with `@keyframes` or transition on class toggle. Works when path length is known or set via inline style from JS on load.
-
-**GSAP approach** — use DrawSVG plugin for subpath control (`drawSVG: "20% 80%"`), auto-handles length calculation, supports reverse and partial draws.
-
-**Multi-stroke / duotone** — layer two `<path>` copies with different colors and stagger their draw timing for a highlight-trail effect.
-
-MANDATORY READ [`references/techniques.md`](references/techniques.md) before writing stroke-draw, clip-path, or morph code — full worked examples for every approach above. Do NOT load it for approach-selection questions; the tables above already answer those.
-
-## Clip-Path Animation
-
-Two approaches: CSS `clip-path` property or SVG `<clipPath>` element.
-
-**CSS `clip-path`:**
-
-- Animate between `polygon()`, `circle()`, `ellipse()`, or `inset()` shapes
-- Shapes must have the same number of vertices for smooth interpolation
-- Use `transition: clip-path 0.6s ease` for hover states
-- Great for reveal/unreveal effects
-
-**SVG `<clipPath>`:**
-
-- Reference with `clip-path: url(#clipId)`
-- Animate the shapes *inside* the `<clipPath>` element
-- Can animate `<circle>`, `<rect>`, `<path>` within the clip
-- Use `gradientTransform` on `<linearGradient>` inside clips for sweep effects
-
-**Key gotcha**: CSS `clip-path` with `polygon()` doesn't interpolate to/from `none` — always transition between shapes with the same vertex count.
-
-## Path Morphing
-
-Morphing between two `<path>` `d` attributes requires matching vertex counts and winding order — manual and anime.js approaches need pre-matched point counts; GSAP MorphSVG handles mismatched vertex counts automatically and supports `shapeIndex` for controlling morph direction.
-
-See [`references/techniques.md`](references/techniques.md) items 8–10 for worked code (anime.js morph, organic blob cycling, GSAP MorphSVG).
-
-## Timing & Easing
-
-- **Elastic easing** (`easeOutElastic`, `easeInOutElastic`) — organic, bouncy feel for blob morphs and playful UI
-- **Bounce** — use GSAP's `CustomBounce` for squash-and-stretch; pairs well with `scaleY` compression at impact
-- **Stagger** — `stagger: 0.05` (GSAP) or manual `animation-delay` for sequential element reveals
-- **Timeline sequencing** — chain animations with labels/offsets; overlap slightly for fluid motion (`"-=0.2"` in GSAP)
-- **Duration guidelines**: micro-interactions 150-300ms, state transitions 300-600ms, complex morphs 600-1200ms, decorative loops 2-6s
-
-## Accessibility
-
-**`prefers-reduced-motion`:**
-
-```css
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-```
-
-In JS, check `window.matchMedia('(prefers-reduced-motion: reduce)').matches` before initializing animations. Provide instant state changes instead.
-
-**Decorative SVGs**: Add `aria-hidden="true"` and `role="presentation"`. Don't animate SVGs that convey meaning without providing a static fallback.
-
-**Flashing**: Never animate opacity or color faster than 3 flashes/second (WCAG 2.3.1).
+MANDATORY READ [`references/techniques.md`](references/techniques.md) before writing stroke-draw, clip-path, morph, squash-stretch, stagger, or scroll-linked code — 15 worked examples, each independently readable via the contents table. Do NOT load it for approach-selection or diagnosis questions; this body answers those.
 
 ## NEVER
 
-- **NEVER blanket-apply `will-change: transform` to all SVG elements** — Instead: apply only to elements about to animate, remove after. Why: unused `will-change` hints waste GPU memory and can hurt performance instead of helping it.
-- **NEVER expect CSS `clip-path` to interpolate to/from `none`** — Instead: always transition between shapes with the same vertex count (`polygon()` to `polygon()`, not `polygon()` to `none`). Why: browsers can't smoothly interpolate a shape that doesn't exist; the animation jumps instead of transitioning.
-- **NEVER animate `width`, `height`, `d`, `points`, or `viewBox` for the main motion of a frequent/looping animation** — Instead: animate `transform` and `opacity`, which run on the GPU compositor. Why: the others trigger layout/paint on every frame and will drop frames under load.
+- **NEVER morph between paths with different command sequences**
+  **Instead:** author both states with identical commands in identical order — including a degenerate zero-radius subpath when a hole must appear — or hand resampling to a library.
+  **Why:** interpolation is a per-coordinate lerp over two command lists; a structural mismatch silently falls back to a discrete swap and hard-cuts at 50%.
 
-## Quick Reference
-
-| Technique | CSS-only | GSAP | anime.js |
-|-----------|----------|------|----------|
-| Stroke draw | ✅ (known length) | ✅ DrawSVG | ✅ strokeDashoffset |
-| Clip-path reveal | ✅ polygon/circle | ✅ | ❌ |
-| Path morph | ❌ | ✅ MorphSVG | ✅ (same vertices) |
-| Squash & stretch | ✅ (basic) | ✅ CustomBounce | ✅ |
-| Stagger | ✅ (delay) | ✅ stagger | ✅ stagger |
-| Scroll-linked | ❌ | ✅ ScrollTrigger | ❌ |
+- **NEVER scroll-link dash animation across many paths without a paint budget**
+  **Instead:** round offset writes to whole units, skip paths outside their active range, cache lengths once, and move any continuous background transform out to a promoted HTML wrapper.
+  **Why:** dash offset regenerates stroke geometry every frame on the main thread; it is fine for one logo and janks a mid-range phone across dozens.

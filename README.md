@@ -44,7 +44,7 @@ Or manually copy just that skill's directory.
 | [with-canvas](skills/with-canvas) | Canvas implementation and review guidance for vanilla JS/TS, Web Workers, OffscreenCanvas, and libraries such as Konva, p5.js, Paper.js, and Three.js |
 | [with-drag-drop](skills/with-drag-drop) | Guidance for building drag-and-drop from scratch: free-dragging, sortable lists, resizable panels, and drop zones, no third-party dependency required |
 | [with-svelte](skills/with-svelte) | Modern Svelte 5 and SvelteKit guidance: runes, template directives, routing, data flow, remote functions, and deployment |
-| [with-svg-animation](skills/with-svg-animation) | Guidance on performant SVG animation: stroke draw effects, path morphing, clip-path animation, and choosing between CSS, GSAP, and anime.js |
+| [with-svg-animation](skills/with-svg-animation) | Pre-flight checks for SVG animation — the traps a vague request hides (subpath dash restarts, `pathLength`, `transform-box`), CSS-first escalation to SMIL, WAAPI and libraries, and 15 worked examples |
 
 ## License
 

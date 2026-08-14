@@ -28,14 +28,32 @@ When unsure of current syntax, do not guess — confirm via the `@sveltejs/mcp` 
 
 | Task involves… | MANDATORY READ |
 |---|---|
-| Reactive state, props, effects, `$state`/`$derived`/`$effect`/`$props`/`$bindable`, Svelte 4→5 migration, `$inspect`, await-in-component | `references/runes-reactivity.md` |
-| `{@attach}` / `use:` actions, `{@html}`, `{@render}`, `{@const}`, `{@debug}`, snippets, keyed each, `bind:`, `<svelte:window>` | `references/template-directives.md` |
-| Component libraries (Bits/Ark/Melt UI), web components, forms, styling child components, CSS-from-JS, context | `references/components.md` |
-| Routing, file naming (`+page`/`+layout`/`+error`/`+server`), nested layouts, route groups, error boundaries, `<svelte:boundary>`, SSR/hydration | `references/sveltekit-structure.md` |
-| `load` functions, `+page.server.ts` vs `+page.ts` vs `+server.ts`, form actions, `fail()`/`redirect()`/`error()`, serialization, `invalidateAll()` | `references/sveltekit-data-flow.md` |
-| Remote functions: `query()`/`form()`/`command()`/`prerender()` in `*.remote.ts`, schema validation, `.updates()` | `references/sveltekit-remote-functions.md` |
-| Adapters, Vite/pnpm setup, PWA, library authoring, Cloudflare/streaming, production build | `references/deployment.md` |
-| Confirming syntax, looking up docs, validating/fixing code | `references/tooling.md` |
+| **Runes** — `$state`, `$derived`, `$effect`, choosing between them | `references/runes-core.md` |
+| **Runes** — `$props`, `$bindable`, reactive class fields, `createSubscriber`, `$inspect` | `references/runes-props.md` |
+| **Runes** — `await` in components, async reactivity, `hydratable` | `references/runes-async.md` |
+| **Runes** — porting Svelte 4 syntax to runes mode | `references/runes-migration.md` |
+| **Runes** — reactivity that compiles but behaves wrongly | `references/runes-antipatterns.md` |
+| **Template** — `{@attach}`, migrating `use:` actions | `references/attachments.md` |
+| **Template** — `{#snippet}` / `{@render}`, replacing slots | `references/snippets.md` |
+| **Template** — `{@html}`, `{@const}`, `{@debug}`, keyed each, `bind:`, `<svelte:window>` | `references/template-tags.md` |
+| **Components** — Bits/Ark/Melt UI, web components, custom elements | `references/component-libraries.md` |
+| **Components** — forms inside components | `references/forms.md` |
+| **Components** — CSS from JS, styling children, context | `references/styling-context.md` |
+| **Routing** — file naming (`+page`/`+layout`/`+error`/`+server`), route groups, params | `references/routing-files.md` |
+| **Routing** — nested layouts, layout groups, layout data | `references/layouts.md` |
+| **Routing** — `+error.svelte`, expected vs unexpected errors | `references/error-handling.md` |
+| **Routing** — `<svelte:boundary>` | `references/error-boundary.md` |
+| **Routing** — SSR, hydration mismatches, browser-only work | `references/ssr-hydration.md` |
+| **Data** — `load` functions, server vs universal, `depends` | `references/load-functions.md` |
+| **Data** — form actions, progressive enhancement | `references/form-actions.md` |
+| **Data** — `fail()` / `redirect()` / `error()` | `references/errors-redirects.md` |
+| **Data** — serialization across the boundary, `invalidateAll()` | `references/serialization-invalidation.md` |
+| **Remote** — `query()` / `form()` in `*.remote.ts`, schema validation | `references/remote-query-form.md` |
+| **Remote** — `command()`, single-flight mutations, `prerender()`, `getRequestEvent()` | `references/remote-command-prerender.md` |
+| **Deploy** — adapters, Vite/pnpm build setup | `references/deployment-adapters.md` |
+| **Deploy** — publishing a Svelte library | `references/library-authoring.md` |
+| **Deploy** — PWA setup, Cloudflare/streaming gotchas | `references/pwa-and-cloudflare.md` |
+| **Tooling** — confirming syntax, looking up docs, validating/fixing code | `references/tooling.md` |
 
 If a task spans areas (e.g. a form that uses runes + a server action), read each matching file. Do **not** load files outside the task's scope. If no reference covers the case, fetch authoritative docs via `references/tooling.md` rather than guessing.
 
@@ -50,7 +68,7 @@ If a task spans areas (e.g. a form that uses runes + a server action), read each
   **Why:** the guard is dead code inside an effect and signals a misunderstanding that hides real hydration bugs.
 
 - **NEVER return non-serializable values (class instances, functions, symbols) from a SvelteKit `load` or remote function**
-  **Instead:** return plain JSON-serializable data; see `references/sveltekit-data-flow.md` / `references/sveltekit-remote-functions.md`.
+  **Instead:** return plain JSON-serializable data; see `references/serialization-invalidation.md` / `references/remote-command-prerender.md`.
   **Why:** load uses JSON and remote functions use `devalue`; non-serializable returns fail silently or at runtime across the server→client boundary.
 
 - **NEVER call `redirect()`/`error()` in SvelteKit without `throw`-ing them**

@@ -1,11 +1,41 @@
 # SVG Animation Techniques — Code Reference
 
+Worked, copy-ready code for each technique. Read the entry that matches the effect; the entries are independent.
+
+**Contents**
+
+| # | Technique | Approach |
+|---|---|---|
+| [1](#1-stroke-draw-effect-css) | Stroke draw effect | CSS |
+| [2](#2-stroke-draw-effect-gsap--drawsvg) | Stroke draw effect | GSAP + DrawSVG |
+| [3](#3-duotone--layered-stroke) | Duotone / layered stroke | CSS or GSAP |
+| [4](#4-clip-path-reveal-css-transitions) | Clip-path reveal | CSS transitions |
+| [5](#5-clip-path-reveal-css-keyframes) | Clip-path reveal | CSS keyframes |
+| [6](#6-svg-clippath-with-animated-circle) | SVG `clipPath` with animated circle | SVG + CSS |
+| [7](#7-svg-clippath-with-gradienttransform-sweep) | SVG `clipPath` gradient sweep | SVG + CSS |
+| [8](#8-path-morphing-animejs) | Path morphing | anime.js |
+| [9](#9-organic-blob-morphing-codrops-pattern) | Organic blob morphing | anime.js |
+| [10](#10-hover-state-morphing-with-elastic-easing) | Hover-state morphing | anime.js |
+| [11](#11-squash--stretch-gsap-custombounce) | Squash and stretch | GSAP CustomBounce |
+| [12](#12-staggered-entrance-gsap) | Staggered entrance | GSAP |
+| [13](#13-scroll-linked-draw-gsap-scrolltrigger) | Scroll-linked draw | GSAP ScrollTrigger |
+| [14](#14-accessible-animation-wrapper) | Accessible animation wrapper | Any |
+| [15](#15-css-only-stroke-draw-with-keyframes) | CSS-only stroke draw | CSS keyframes |
+
+---
+
 ## 1. Stroke Draw Effect (CSS)
+
+Normalize with `pathLength="1"` — no measuring, no JS, and it survives the artwork being redrawn.
+
+```html
+<path class="draw-path" pathLength="1" d="…" />
+```
 
 ```css
 .draw-path {
-  stroke-dasharray: var(--path-length);
-  stroke-dashoffset: var(--path-length);
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
   transition: stroke-dashoffset 1.5s ease-in-out;
 }
 
@@ -14,11 +44,13 @@
 }
 ```
 
+**Measured variant — only for constant pen speed.** When several paths of different lengths must draw at the same visual rate, you need real lengths to derive per-path durations. Measure once at init and cache; never call `getTotalLength()` per frame.
+
 ```js
-// Set path length as CSS variable on load
 document.querySelectorAll('.draw-path').forEach(path => {
   const length = path.getTotalLength();
   path.style.setProperty('--path-length', length);
+  path.style.setProperty('--draw-duration', `${length / 300}s`); // 300 units/sec
 });
 ```
 
@@ -338,12 +370,16 @@ createAnimation('.hero-path', {
 
 ## 15. CSS-Only Stroke Draw with `@keyframes`
 
-No JS needed if you know the path length:
+No JS and nothing to measure — `pathLength="1"` rescales the dash coordinate system so `1` always means "the whole path".
+
+```html
+<path class="logo-path" pathLength="1" d="…" />
+```
 
 ```css
 .logo-path {
-  stroke-dasharray: 500; /* must match getTotalLength() */
-  stroke-dashoffset: 500;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
   animation: draw 2s ease-in-out forwards;
 }
 
