@@ -1,6 +1,6 @@
 {
   "name": "robcsaszar-frontend-kit",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Frontend implementation and review skills for canvas, drag-and-drop, Svelte 5 / SvelteKit, and SVG animation work.",
   "author": {
     "name": "Rob Csaszar",
