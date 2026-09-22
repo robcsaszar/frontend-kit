@@ -1,14 +1,15 @@
 # Svelte 5 Runes — Props & Class Fields
 
-`$props`, `$bindable`, reactive class fields, `createSubscriber`, and `$inspect`.
+`$props`, `$bindable`, reactive class fields, `svelte/reactivity` built-ins, `createSubscriber`, and `$inspect`.
 
-**Last verified:** 2026-03-12
+**Last verified:** 2026-09-15
 
 **Contents**
 
 - `$props`
 - `$bindable`
 - Reactive class fields
+- Reactive built-ins from `svelte/reactivity`
 - `createSubscriber` — external observables
 - `$inspect`
 
@@ -150,6 +151,19 @@ Parent needs to read child state?
 ```
 
 Use classes with `$state` fields to share reactivity between components, instead of stores.
+
+## Reactive built-ins from `svelte/reactivity`
+
+Native `Map`, `Set`, `Date`, and `URL` are **not** made reactive by `$state` — the proxy cannot see through their internal slots, so `map.set(k, v)` updates nothing. Use the drop-in replacements, which are reactive per-key:
+
+```js
+import { SvelteMap, SvelteSet, SvelteDate, SvelteURL } from 'svelte/reactivity';
+
+const selected = new SvelteSet();     // not: $state(new Set())
+selected.add(id);                     // re-runs only what read this key
+```
+
+`MediaQuery` (from the same module) wraps `window.matchMedia` with a reactive `.current`. `prefersReducedMotion` in `svelte/motion` is one. The hand-rolled version below is how `MediaQuery` is built, and the pattern to copy for any other external event source.
 
 ## `createSubscriber` — external observables
 

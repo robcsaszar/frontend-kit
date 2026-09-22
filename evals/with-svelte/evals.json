@@ -1,0 +1,75 @@
+{
+  "skill_name": "with-svelte",
+  "evals": [
+    {
+      "id": 1,
+      "name": "port-framer-spring-constants",
+      "prompt": "I'm porting a component over from React. It used a spring with stiffness 170 and damping 26 to animate a box's x position. What's the Svelte 5 equivalent? Just the component code and a short explanation.",
+      "expected_output": "Uses the Spring class, reads .current, and flags that Svelte's stiffness/damping are 0-1 ratios rather than the React-scale constants, so 170/26 must not be passed through.",
+      "baseline_failure": "",
+      "expectations": [
+        "Uses the Spring class from svelte/motion, not the deprecated spring() store factory",
+        "States that Svelte's stiffness and damping are on a 0-1 scale, or are clamped to 0-1, rather than the React/Framer scale",
+        "Does not pass the literal values 170 and 26 as the stiffness and damping options of a Svelte Spring",
+        "Reads the animated value through .current"
+      ],
+      "runs": 1
+    },
+    {
+      "id": 2,
+      "name": "collapsible-height-spring",
+      "prompt": "I have a collapsible panel in Svelte 5 and I want its height to spring open and closed. The content inside can change size while the panel is open, and that should animate too. How do I build it?",
+      "expected_output": "Measures the content (ResizeObserver), clips with overflow hidden, springs the measured number, and the code path re-runs when the open flag changes rather than only on content resize.",
+      "baseline_failure": "",
+      "expectations": [
+        "States that height cannot be sprung to auto and a measured number is required",
+        "Uses a ResizeObserver, or another explicit measurement of the content element, to obtain the height",
+        "Sets overflow to hidden on the element whose height is animated",
+        "The height is updated when the open flag changes, not only from inside the resize callback",
+        "Uses the Spring class and reads .current in the template"
+      ],
+      "runs": 1
+    },
+    {
+      "id": 3,
+      "name": "modal-hangs-before-unmount",
+      "prompt": "My spring-animated modal feels broken on close. It springs down to where it should be, then just sits there for a beat before it actually disappears. The unmount is awaiting the spring's promise. What's going on?",
+      "expected_output": "Identifies Spring precision (default 0.01) as the cause: the spring creeps imperceptibly toward the target before resolving. Fix is to raise precision.",
+      "baseline_failure": "",
+      "expectations": [
+        "Identifies the spring's precision option as the cause of the delay",
+        "States or implies that the default precision is 0.01",
+        "Recommends raising the precision value for the exiting element",
+        "Does not attribute the delay primarily to duration, easing, or a CSS transition"
+      ],
+      "runs": 1
+    }
+  ],
+  "triggers": {
+    "note": "positive = with-svelte should be consulted; near_miss = it should not. Split 60/40 train/holdout; holdout is never used to tune the description.",
+    "train": {
+      "positive": [
+        "the accordion in src/lib/components/Accordion.svelte jumps straight to full height instead of easing open. the content is dynamic so i can't hardcode a height. how do i make it spring open?",
+        "porting our ProgressBar over from react-spring to svelte 5 \u2014 it used useSpring with config.gentle. what's the equivalent and where do the stiffness numbers go?",
+        "our modal lingers for about 300ms after the close animation looks finished before it actually unmounts. we await the spring's promise to trigger the unmount. any idea what's happening?",
+        "i've got `const w = tweened(0, { duration: 400 })` in a .svelte file and svelte-check is warning that it's deprecated. what replaces it?"
+      ],
+      "near_miss": [
+        "our Spring Boot service's /api/quiz endpoint returns a 500 under concurrent writes. where should i start looking?",
+        "what easing curve feels best for a button hover \u2014 plain ease-out, or is a custom cubic-bezier worth it?",
+        "i want the logo to draw itself on page load, stroke by stroke. it's an inline svg with about six paths.",
+        "add a spring animation to the drag handle in our React dashboard so it settles instead of snapping"
+      ]
+    },
+    "holdout": {
+      "positive": [
+        "need the rows in Leaderboard.svelte to slide to their new positions when the ranking updates, instead of just popping into place",
+        "the load function in +page.server.ts returns a Date and it arrives on the client as a string. what am i doing wrong?"
+      ],
+      "near_miss": [
+        "which shadcn-svelte component should i use for a multi-select with search?",
+        "the particle background on our hero canvas drops to about 20fps on mobile. how do i profile it?"
+      ]
+    }
+  }
+}

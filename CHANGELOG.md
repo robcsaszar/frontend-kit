@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows [SemVer](https://semver.org/).
 
+## [0.7.0] - 2026-09-22
+
+### Added
+
+- `with-svelte`: `references/motion.md` — `Spring`, `Tween`, `transition:`, `animate:flip`, easing, and `prefersReducedMotion`, with a routing-table entry and description triggers (`svelte/motion`, `svelte transitions`, `animate flip`).
+- `with-svelte`: `references/runes-props.md` gains a section on the reactive built-ins from `svelte/reactivity`. Native `Map`, `Set`, `Date`, and `URL` are **not** made reactive by `$state` — the proxy cannot see through their internal slots, so `map.set(k, v)` updates nothing. Documents `SvelteMap`, `SvelteSet`, `SvelteDate`, `SvelteURL`, and `MediaQuery`.
+- `with-svelte`: eval suite at `evals/with-svelte/`.
+
+### Changed
+
+- `with-svelte`: prefer the `Spring`/`Tween` classes over the deprecated `spring()`/`tweened()` stores, in the modern-syntax list.
+- `with-svelte`: new NEVER against using an `$effect` to mirror a value into a `Spring`/`Tween` — with a stated exception for a set needing per-call options `.of()` cannot pass, where an effect is the correct tool.
+- `with-svelte`: description gains a negative trigger (visual design critique, component-library selection, non-Svelte frameworks, Spring Boot).
+- `with-svelte`: `references/runes-props.md` re-verified 2026-09-15.
 ## [0.6.0] - 2026-08-14
 
 ### Changed
@@ -20,5 +34,6 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 - Initial release: with-canvas, with-drag-drop, with-svelte, and with-svg-animation skills.
 
+[0.7.0]: https://github.com/robcsaszar/frontend-kit/releases/tag/v0.7.0
 [0.6.0]: https://github.com/robcsaszar/frontend-kit/releases/tag/v0.6.0
 [0.5.0]: https://github.com/robcsaszar/frontend-kit/releases/tag/v0.5.0
